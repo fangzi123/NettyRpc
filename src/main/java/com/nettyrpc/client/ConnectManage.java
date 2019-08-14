@@ -25,7 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class ConnectManage {
     private static final Logger logger = LoggerFactory.getLogger(ConnectManage.class);
-    private volatile static ConnectManage connectManage;
+    //private volatile static ConnectManage connectManage;
 
     private EventLoopGroup eventLoopGroup = new NioEventLoopGroup(4);
     private static ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(16, 16,
@@ -42,16 +42,19 @@ public class ConnectManage {
 
     private ConnectManage() {
     }
-
+    private static class SingleTonHoler{
+        private static ConnectManage singleTon=new ConnectManage();
+    }
     public static ConnectManage getInstance() {
-        if (connectManage == null) {
+        return SingleTonHoler.singleTon;
+/*        if (connectManage == null) {
             synchronized (ConnectManage.class) {
                 if (connectManage == null) {
                     connectManage = new ConnectManage();
                 }
             }
         }
-        return connectManage;
+        return connectManage;*/
     }
 
     public void updateConnectedServer(List<String> allServerAddress) {

@@ -11,7 +11,7 @@ public class Benchmark {
 
     public static void main(String[] args) throws InterruptedException {
 
-        ServiceDiscovery serviceDiscovery = new ServiceDiscovery("10.245.247.105:2181");
+        ServiceDiscovery serviceDiscovery = new ServiceDiscovery("127.0.0.1:2181");
         final RpcClient rpcClient = new RpcClient(serviceDiscovery);
 
         int threadNum = 10;
@@ -27,6 +27,7 @@ public class Benchmark {
                     for (int i = 0; i < requestNum; i++) {
                         final HelloService syncClient = rpcClient.create(HelloService.class);
                         String result = syncClient.hello(Integer.toString(i));
+
                         if (!result.equals("Hello! " + i))
                             System.out.print("error = " + result);
                     }
