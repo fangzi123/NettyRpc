@@ -32,5 +32,4 @@ out/
 target/
 .idea/
 .settings/
-.gitignore
 *.iml
