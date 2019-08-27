@@ -3,9 +3,11 @@ package com.nettyrpc.test.app;
 import com.nettyrpc.client.RPCFuture;
 import com.nettyrpc.client.RpcClient;
 import com.nettyrpc.client.proxy.IAsyncObjectProxy;
+import com.nettyrpc.client.proxy.RpcClientProxy;
 import com.nettyrpc.test.client.PersonService;
 import com.nettyrpc.test.client.HelloService;
 import com.nettyrpc.test.client.Person;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -20,7 +22,7 @@ import java.util.concurrent.ExecutionException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsEqual.equalTo;
-
+@Slf4j
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "classpath:client-spring.xml")
 public class ServiceTest {
@@ -28,16 +30,22 @@ public class ServiceTest {
     @Autowired
     private RpcClient rpcClient;
 
+    @RpcClientProxy
+    HelloService helloService;
+    @RpcClientProxy
+    HelloService helloService1;
+    @RpcClientProxy
+    PersonService personService;
     @Test
     public void helloTest1() {
-        HelloService helloService = rpcClient.create(HelloService.class);
+        //HelloService helloService = RpcClient.create(HelloService.class);
         String result = helloService.hello("World");
         Assert.assertEquals("Hello! World", result);
     }
 
     @Test
     public void helloTest2() {
-        HelloService helloService = rpcClient.create(HelloService.class);
+       // HelloService helloService = rpcClient.create(HelloService.class);
         Person person = new Person("Yong", "Huang");
         String result = helloService.hello(person);
         Assert.assertEquals("Hello! Yong Huang", result);
