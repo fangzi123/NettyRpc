@@ -10,12 +10,12 @@
 
     <context:property-placeholder location="classpath:rpc.properties"/>
 
-    <bean id="serviceDiscovery" class="com.nettyrpc.registry.ServiceDiscovery">
+    <!--<bean id="serviceDiscovery" class="com.nettyrpc.registry.ServiceDiscovery">
         <constructor-arg name="registryAddress" value="${registry.address}"/>
-    </bean>
+    </bean>-->
 
     <bean id="rpcClient" class="com.nettyrpc.client.RpcClient">
-        <constructor-arg name="serviceDiscovery" ref="serviceDiscovery"/>
+        <constructor-arg name="registryCenterAddress" value="${registry.address}"/>
     </bean>
 
 </beans>

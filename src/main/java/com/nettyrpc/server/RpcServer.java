@@ -146,7 +146,7 @@ public class RpcServer implements ApplicationContextAware, InitializingBean {
                 RegistryCenterAddress registryCenterAddress = new RegistryCenterAddress(rpcServerOptions.getNamingServiceUrl());
                 NamingServiceFactory namingServiceFactory = NamingServiceFactoryManager.getInstance()
                         .getNamingServiceFactory(registryCenterAddress.getSchema());
-                this.namingService = namingServiceFactory.createNamingService(registryCenterAddress);
+                namingService = namingServiceFactory.createNamingService(registryCenterAddress);
 
                 namingService.register(registerInfo);
             }

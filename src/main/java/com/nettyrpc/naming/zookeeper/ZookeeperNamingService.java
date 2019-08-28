@@ -2,7 +2,7 @@
  * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * you may not use this list except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -17,6 +17,7 @@
 package com.nettyrpc.naming.zookeeper;
 
 
+import com.nettyrpc.client.ConnectManage;
 import com.nettyrpc.naming.NamingService;
 import com.nettyrpc.naming.RegisterInfo;
 import com.nettyrpc.naming.RegistryCenterAddress;
@@ -26,6 +27,8 @@ import org.apache.zookeeper.*;
 import org.apache.zookeeper.data.Stat;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 @Slf4j
@@ -36,6 +39,14 @@ public class ZookeeperNamingService implements NamingService {
 
     public ZookeeperNamingService(RegistryCenterAddress registryCenterAddress) {
         this.registryCenterAddress = registryCenterAddress;
+    }
+
+    @Override
+    public void subscribe() {
+        ZooKeeper zookeeper = connectServer();
+        if (zookeeper != null) {
+            watchNode(zookeeper);
+        }
     }
 
     @Override
@@ -95,4 +106,29 @@ public class ZookeeperNamingService implements NamingService {
             log.error("", ex);
         }
     }
+
+    private void watchNode(final ZooKeeper zk) {
+        try {
+            List<String> nodeList = zk.getChildren(Constant.ZK_REGISTRY_PATH, new Watcher() {
+                @Override
+                public void process(WatchedEvent event) {
+                    if (event.getType() == Event.EventType.NodeChildrenChanged) {
+                        watchNode(zk);
+                    }
+                }
+            });
+            List<String> dataList = new ArrayList<>();
+            for (String node : nodeList) {
+                byte[] bytes = zk.getData(Constant.ZK_REGISTRY_PATH + "/" + node, false, null);
+                dataList.add(new String(bytes));
+            }
+            log.info("node data: {}", dataList);
+            //this.dataList = dataList;
+            log.info("Service discovery triggered updating connected server node.");
+            ConnectManage.getInstance().updateConnectedServer(dataList);
+        } catch (KeeperException | InterruptedException e) {
+            log.error("{}", e);
+        }
+    }
+
 }

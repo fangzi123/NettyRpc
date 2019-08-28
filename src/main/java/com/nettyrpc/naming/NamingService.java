@@ -2,7 +2,7 @@
  * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ * you may not use this list except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -27,9 +27,8 @@ public interface NamingService {
     /**
      * 订阅符合条件的已注册数据，当有注册数据变更时自动推送.
      *
-     * @param listener 变更事件监听器，不允许为空
      */
-    //void subscribe(SubscribeInfo subscribeInfo, NotifyListener listener);
+    void subscribe();
 
     /**
      * 取消订阅.

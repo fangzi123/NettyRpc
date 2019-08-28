@@ -25,7 +25,7 @@ public class NamingServiceFactoryManager {
     private NamingServiceFactoryManager() {
         this.namingServiceFactoryMap = new HashMap<String, NamingServiceFactory>();
 //        this.namingServiceFactoryMap.put("list", new ListNamingServiceFactory());
-//        this.namingServiceFactoryMap.put("file", new FileNamingServiceFactory());
+//        this.namingServiceFactoryMap.put("list", new ListNamingServiceFactory());
     }
 
     public void registerNamingServiceFactory(NamingServiceFactory namingServiceFactory) {

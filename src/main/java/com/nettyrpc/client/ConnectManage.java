@@ -129,7 +129,7 @@ public class ConnectManage {
                     @Override
                     public void operationComplete(final ChannelFuture channelFuture) throws Exception {
                         if (channelFuture.isSuccess()) {
-                            logger.debug("Successfully connect to remote server. remote peer = " + remotePeer);
+                            logger.info("Successfully connect to remote server. remote peer = " + remotePeer);
                             RpcClientHandler handler = channelFuture.channel().pipeline().get(RpcClientHandler.class);
                             addHandler(handler);
                         }
@@ -166,7 +166,9 @@ public class ConnectManage {
 
     public RpcClientHandler chooseHandler() {
         int size = connectedHandlers.size();
-        while (isRuning && size <= 0) {
+        int count = 0;
+        while (isRuning && size <= 0&&count<=0) {
+            count++;
             try {
                 boolean available = waitingForHandler();
                 if (available) {
@@ -176,6 +178,9 @@ public class ConnectManage {
                 logger.error("Waiting for available node is interrupted! ", e);
                 throw new RuntimeException("Can't connect any servers!", e);
             }
+        }
+        if (size == 0) {
+            throw new RuntimeException("Can't connect any servers!");
         }
         int index = (roundRobin.getAndAdd(1) + size) % size;
         return connectedHandlers.get(index);

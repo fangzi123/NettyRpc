@@ -1,2 +1,2 @@
 com.nettyrpc.naming.zookeeper.ZookeeperNamingFactory
-com.nettyrpc.naming.file.FileNamingServiceFactory
+com.nettyrpc.naming.list.ListNamingServiceFactory

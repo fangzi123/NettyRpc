@@ -16,7 +16,8 @@ public class RpcBootstrapWithoutSpring {
         int port = 18866;
         //ServiceRegistry serviceRegistry = new ServiceRegistry("127.0.0.1:2181");
         RpcServerOptions options = new RpcServerOptions();
-        options.setNamingServiceUrl("zookeeper://127.0.0.1:2181");
+//        options.setNamingServiceUrl("zookeeper://127.0.0.1:2181");
+        options.setNamingServiceUrl("list://"+host+":"+port);
 //        options.setNamingServiceUrl(PropertyUtils.get("server"));
         RpcServer rpcServer = new RpcServer(host,port,options);
         HelloService helloService = new HelloServiceImpl();

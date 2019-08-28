@@ -2,7 +2,11 @@ package com.nettyrpc.client;
 
 import com.nettyrpc.client.proxy.IAsyncObjectProxy;
 import com.nettyrpc.client.proxy.ObjectProxy;
-import com.nettyrpc.registry.ServiceDiscovery;
+import com.nettyrpc.naming.NamingService;
+import com.nettyrpc.naming.NamingServiceFactory;
+import com.nettyrpc.naming.NamingServiceFactoryManager;
+import com.nettyrpc.naming.RegistryCenterAddress;
+import com.nettyrpc.spi.ExtensionLoaderManager;
 
 import java.lang.reflect.Proxy;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -15,19 +19,25 @@ import java.util.concurrent.TimeUnit;
  * @author luxiaoxun
  */
 public class RpcClient {
-
-    private String serverAddress;
-    private ServiceDiscovery serviceDiscovery;
+    private NamingService namingService;
+    private String registryCenterAddress;
+    //private ServiceDiscovery serviceDiscovery;
     private static ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(16, 16,
             600L, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(65536));
 
-    public RpcClient(String serverAddress) {
-        this.serverAddress = serverAddress;
+    public RpcClient(String registryCenterAddress) {
+        this.registryCenterAddress = registryCenterAddress;
+        ExtensionLoaderManager.getInstance().loadAllExtensions("utf-8");
+        RegistryCenterAddress url = new RegistryCenterAddress(registryCenterAddress);
+        NamingServiceFactory namingServiceFactory
+                = NamingServiceFactoryManager.getInstance().getNamingServiceFactory(url.getSchema());
+        namingService = namingServiceFactory.createNamingService(url);
+        namingService.subscribe();
     }
 
-    public RpcClient(ServiceDiscovery serviceDiscovery) {
+ /*   public RpcClient(ServiceDiscovery serviceDiscovery) {
         this.serviceDiscovery = serviceDiscovery;
-    }
+    }*/
 
     @SuppressWarnings("unchecked")
     public static <T> T create(Class<T> interfaceClass) {
@@ -48,7 +58,7 @@ public class RpcClient {
 
     public void stop() {
         threadPoolExecutor.shutdown();
-        serviceDiscovery.stop();
+        //serviceDiscovery.stop();
         ConnectManage.getInstance().stop();
     }
 }
