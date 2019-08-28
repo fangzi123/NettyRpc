@@ -33,8 +33,6 @@ public class ServiceTest {
     @RpcClientProxy
     HelloService helloService;
     @RpcClientProxy
-    HelloService helloService1;
-    @RpcClientProxy
     PersonService personService;
     @Test
     public void helloTest1() {

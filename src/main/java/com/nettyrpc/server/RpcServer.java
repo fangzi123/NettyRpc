@@ -1,10 +1,11 @@
 package com.nettyrpc.server;
 
+import com.nettyrpc.naming.*;
 import com.nettyrpc.protocol.RpcDecoder;
 import com.nettyrpc.protocol.RpcEncoder;
 import com.nettyrpc.protocol.RpcRequest;
 import com.nettyrpc.protocol.RpcResponse;
-import com.nettyrpc.registry.ServiceRegistry;
+import com.nettyrpc.spi.ExtensionLoaderManager;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -14,11 +15,14 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import lombok.Getter;
 import org.apache.commons.collections4.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,18 +30,25 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.util.StringUtils;
 
 /**
  * RPC Server
  *
  * @author huangyong, luxiaoxun
  */
+@Getter
 public class RpcServer implements ApplicationContextAware, InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(RpcServer.class);
+    private String host;
+    private int port;
+    //private String serverAddress;
+    //    private ServiceRegistry serviceRegistry;
+    private RegisterInfo registerInfo = new RegisterInfo();
+    private NamingService namingService;
+    private RpcServerOptions rpcServerOptions = new RpcServerOptions();
 
-    private String serverAddress;
-    private ServiceRegistry serviceRegistry;
 
     private Map<String, Object> handlerMap = new HashMap<>();
     private static ThreadPoolExecutor threadPoolExecutor;
@@ -45,13 +56,15 @@ public class RpcServer implements ApplicationContextAware, InitializingBean {
     private EventLoopGroup bossGroup = null;
     private EventLoopGroup workerGroup = null;
 
-    public RpcServer(String serverAddress) {
-        this.serverAddress = serverAddress;
-    }
+//    public RpcServer(String host) {
+//        //this.serverAddress = serverAddress;
+//    }
 
-    public RpcServer(String serverAddress, ServiceRegistry serviceRegistry) {
-        this.serverAddress = serverAddress;
-        this.serviceRegistry = serviceRegistry;
+    public RpcServer(String host,int port,final RpcServerOptions options) {
+        this.host = host;
+        this.port = port;
+        registerInfo.setHostPort(host+":"+port);
+        this.rpcServerOptions = options;
     }
 
     @Override
@@ -120,16 +133,26 @@ public class RpcServer implements ApplicationContextAware, InitializingBean {
                     .option(ChannelOption.SO_BACKLOG, 128)
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
 
-            String[] array = serverAddress.split(":");
-            String host = array[0];
-            int port = Integer.parseInt(array[1]);
+            //String[] array = serverAddress.split(":");
+            //String host = array[0];
+            //int port = Integer.parseInt(array[1]);
 
             ChannelFuture future = bootstrap.bind(host, port).sync();
             logger.info("Server started on port {}", port);
 
-            if (serviceRegistry != null) {
-                serviceRegistry.register(serverAddress);
+
+            ExtensionLoaderManager.getInstance().loadAllExtensions("utf-8");
+            if (!StringUtils.isEmpty(rpcServerOptions.getNamingServiceUrl())) {
+                RegistryCenterAddress registryCenterAddress = new RegistryCenterAddress(rpcServerOptions.getNamingServiceUrl());
+                NamingServiceFactory namingServiceFactory = NamingServiceFactoryManager.getInstance()
+                        .getNamingServiceFactory(registryCenterAddress.getSchema());
+                this.namingService = namingServiceFactory.createNamingService(registryCenterAddress);
+
+                namingService.register(registerInfo);
             }
+//            if (serviceRegistry != null) {
+//                serviceRegistry.register(serverAddress);
+//            }
 
             future.channel().closeFuture().sync();
         }
