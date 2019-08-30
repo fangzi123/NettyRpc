@@ -2,6 +2,7 @@ package com.nettyrpc.server;
 
 import com.nettyrpc.protocol.RpcRequest;
 import com.nettyrpc.protocol.RpcResponse;
+import com.nettyrpc.registry.Constant;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -9,6 +10,8 @@ import io.netty.channel.SimpleChannelInboundHandler;
 
 import java.util.Map;
 
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
 import net.sf.cglib.reflect.FastClass;
 import net.sf.cglib.reflect.FastMethod;
 import org.slf4j.Logger;
@@ -22,6 +25,10 @@ import org.slf4j.LoggerFactory;
 public class RpcHandler extends SimpleChannelInboundHandler<RpcRequest> {
 
     private static final Logger logger = LoggerFactory.getLogger(RpcHandler.class);
+    /**
+     * 心跳丢失次数
+     */
+    private int counter = 0;
 
     private final Map<String, Object> handlerMap;
 
@@ -30,16 +37,26 @@ public class RpcHandler extends SimpleChannelInboundHandler<RpcRequest> {
     }
 
     @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        logger.info("RemoteAddress : " + ctx.channel().remoteAddress().toString()+ " offline !");
+    }
+    @Override
     public void channelRead0(final ChannelHandlerContext ctx, final RpcRequest request) throws Exception {
+        //重置心跳丢失次数
+        counter = 0;
         RpcServer.submit(new Runnable() {
             @Override
             public void run() {
-                logger.debug("Receive request " + request.getRequestId());
+                logger.info("Receive request: {} success,RemoteAddress: {} ,localAddress: {}" , request.getRequestId(),ctx.channel().remoteAddress().toString(),ctx.channel().localAddress().toString());
                 RpcResponse response = new RpcResponse();
                 response.setRequestId(request.getRequestId());
                 try {
-                    Object result = handle(request);
-                    response.setResult(result);
+                    if (!Constant.HEART_BEAT.equals(request.getRequestId())) {
+                        Object  result = handle(request);
+                        response.setResult(result);
+                    }else{
+                        response.setResult("heartbeat ok");
+                    }
                 } catch (Throwable t) {
                     response.setError(t.toString());
                     logger.error("RPC Server handle request error", t);
@@ -91,4 +108,28 @@ public class RpcHandler extends SimpleChannelInboundHandler<RpcRequest> {
         logger.error("server caught exception", cause);
         ctx.close();
     }
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        logger.info("RemoteAddress : " + ctx.channel().remoteAddress().toString()+ " active !");
+        super.channelActive(ctx);
+    }
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if (evt instanceof IdleStateEvent) {
+            IdleStateEvent event = (IdleStateEvent) evt;
+            if (event.state().equals(IdleState.READER_IDLE)){
+                // 空闲40s之后触发 (心跳包丢失)
+                if (counter >= 3) {
+                    // 连续丢失3个心跳包 (断开连接)
+                    ctx.channel().close().sync();
+                    logger.error("已与"+ctx.channel().remoteAddress()+"断开连接");
+                } else {
+                    counter++;
+                    logger.info(ctx.channel().remoteAddress() + "丢失了第 " + counter + " 个心跳包");
+                }
+            }
+        }
+    }
+
 }

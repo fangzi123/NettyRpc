@@ -68,7 +68,7 @@ public class ObjectProxy<T> implements InvocationHandler, IAsyncObjectProxy {
         return rpcFuture;
     }
 
-    private RpcRequest createRequest(String className, String methodName, Object[] args) {
+    public  RpcRequest createRequest(String className, String methodName, Object[] args) {
         RpcRequest request = new RpcRequest();
         request.setRequestId(UUID.randomUUID().toString());
         request.setClassName(className);

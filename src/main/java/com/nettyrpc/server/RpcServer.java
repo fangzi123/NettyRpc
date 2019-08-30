@@ -14,14 +14,8 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.*;
-
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.timeout.IdleStateHandler;
 import lombok.Getter;
 import org.apache.commons.collections4.MapUtils;
 import org.slf4j.Logger;
@@ -31,6 +25,12 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.util.StringUtils;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * RPC Server
@@ -124,6 +124,7 @@ public class RpcServer implements ApplicationContextAware, InitializingBean {
                         @Override
                         public void initChannel(SocketChannel channel) throws Exception {
                             channel.pipeline()
+                                    .addLast(new IdleStateHandler(15,0,0,TimeUnit.SECONDS))
                                     .addLast(new LengthFieldBasedFrameDecoder(65536, 0, 4, 0, 0))
                                     .addLast(new RpcDecoder(RpcRequest.class))
                                     .addLast(new RpcEncoder(RpcResponse.class))

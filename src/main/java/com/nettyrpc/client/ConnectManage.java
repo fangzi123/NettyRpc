@@ -3,6 +3,7 @@ package com.nettyrpc.client;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.EventLoop;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -107,15 +108,19 @@ public class ConnectManage {
         }
     }
 
-    public void reconnect(final RpcClientHandler handler, final SocketAddress remotePeer) {
+    /*public void reconnect(final RpcClientHandler handler, final SocketAddress remotePeer) {
         if (handler != null) {
             connectedHandlers.remove(handler);
             connectedServerNodes.remove(handler.getRemotePeer());
         }
         connectServerNode((InetSocketAddress) remotePeer);
+    }*/
+    public void reconnect(final SocketAddress remotePeer) {
+        connectedHandlers.clear();
+        connectedServerNodes.clear();
+        connectServerNode((InetSocketAddress) remotePeer);
     }
-
-    private void connectServerNode(final InetSocketAddress remotePeer) {
+    public void connectServerNode(final InetSocketAddress remotePeer) {
         threadPoolExecutor.submit(new Runnable() {
             @Override
             public void run() {
@@ -132,6 +137,18 @@ public class ConnectManage {
                             logger.info("Successfully connect to remote server. remote peer = " + remotePeer);
                             RpcClientHandler handler = channelFuture.channel().pipeline().get(RpcClientHandler.class);
                             addHandler(handler);
+                        }else{
+                            /**
+                             * 断线重连
+                             */
+                            final EventLoop loop = channelFuture.channel().eventLoop();
+                            loop.schedule(new Runnable() {
+                                @Override
+                                public void run() {
+                                    logger.error("服务端链接不上，开始重连操作...");
+                                    reconnect(remotePeer);
+                                }
+                            }, 1L, TimeUnit.SECONDS);
                         }
                     }
                 });
