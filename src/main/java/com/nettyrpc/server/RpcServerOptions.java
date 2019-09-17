@@ -16,12 +16,17 @@
 
 package com.nettyrpc.server;
 
+import com.nettyrpc.interceptor.Interceptor;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Created by wenweihu86 on 2017/4/24.
@@ -84,6 +89,8 @@ public class RpcServerOptions {
     // share global thread pool between multi rpcServer
     private boolean globalThreadPoolSharing = false;
 
+    private List<Interceptor> interceptors;
+
     public RpcServerOptions(RpcServerOptions options) {
         this.copyFrom(options);
     }
@@ -107,6 +114,8 @@ public class RpcServerOptions {
         this.workThreadNum = options.workThreadNum;
         this.writerIdleTime = options.writerIdleTime;
         this.globalThreadPoolSharing = options.globalThreadPoolSharing;
+        this.interceptors = options.interceptors;
     }
+
 
 }

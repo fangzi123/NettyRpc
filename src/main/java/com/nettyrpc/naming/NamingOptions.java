@@ -35,7 +35,7 @@ public class NamingOptions {
     private String version = "1.0.0";
 
     /**
-     * if true, naming service will throw exception when register/subscribe exceptions.
+     * if true, naming service will throw exception when register/subscribe com.nettyrpc.exceptions.
      */
     private boolean ignoreFailOfNamingService = false;
 

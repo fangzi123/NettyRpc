@@ -1,5 +1,7 @@
 package com.nettyrpc.server;
 
+import com.nettyrpc.interceptor.Interceptor;
+import com.nettyrpc.interceptor.ServerInvokeInterceptor;
 import com.nettyrpc.naming.*;
 import com.nettyrpc.protocol.RpcDecoder;
 import com.nettyrpc.protocol.RpcEncoder;
@@ -26,7 +28,9 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -49,8 +53,9 @@ public class RpcServer implements ApplicationContextAware, InitializingBean {
     private NamingService namingService;
     private RpcServerOptions rpcServerOptions = new RpcServerOptions();
 
+    public static List<Interceptor> interceptors = new ArrayList<Interceptor>();
+    public static Map<String, Object> handlerMap = new HashMap<>();
 
-    private Map<String, Object> handlerMap = new HashMap<>();
     private static ThreadPoolExecutor threadPoolExecutor;
 
     private EventLoopGroup bossGroup = null;
@@ -65,6 +70,10 @@ public class RpcServer implements ApplicationContextAware, InitializingBean {
         this.port = port;
         registerInfo.setHostPort(host+":"+port);
         this.rpcServerOptions = options;
+        if (options.getInterceptors() != null) {
+            interceptors.addAll(options.getInterceptors());
+        }
+        interceptors.add(new ServerInvokeInterceptor());
     }
 
     @Override
@@ -115,6 +124,8 @@ public class RpcServer implements ApplicationContextAware, InitializingBean {
     }
 
     public void start() throws Exception {
+
+
         if (bossGroup == null && workerGroup == null) {
             bossGroup = new NioEventLoopGroup();
             workerGroup = new NioEventLoopGroup();

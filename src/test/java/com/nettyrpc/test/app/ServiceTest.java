@@ -38,6 +38,7 @@ public class ServiceTest {
     public void helloTest1() {
         //HelloService helloService = RpcClient.create(HelloService.class);
         String result = helloService.hello("World");
+        log.info("result============={}",result);
         Assert.assertEquals("Hello! World", result);
     }
 

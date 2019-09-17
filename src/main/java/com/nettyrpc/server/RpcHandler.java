@@ -1,5 +1,7 @@
 package com.nettyrpc.server;
 
+import com.nettyrpc.interceptor.DefaultInterceptorChain;
+import com.nettyrpc.interceptor.InterceptorChain;
 import com.nettyrpc.protocol.RpcRequest;
 import com.nettyrpc.protocol.RpcResponse;
 import com.nettyrpc.registry.Constant;
@@ -12,6 +14,7 @@ import java.util.Map;
 
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
+import lombok.Getter;
 import net.sf.cglib.reflect.FastClass;
 import net.sf.cglib.reflect.FastMethod;
 import org.slf4j.Logger;
@@ -52,8 +55,11 @@ public class RpcHandler extends SimpleChannelInboundHandler<RpcRequest> {
                 response.setRequestId(request.getRequestId());
                 try {
                     if (!Constant.HEART_BEAT.equals(request.getRequestId())) {
-                        Object  result = handle(request);
-                        response.setResult(result);
+//                        Object  result = handle(request);
+//                        response.setResult(result);
+                        //责任链模式优化
+                        InterceptorChain interceptorChain = new DefaultInterceptorChain(RpcServer.interceptors);
+                        interceptorChain.intercept(request, response);
                     }else{
                         response.setResult("heartbeat ok");
                     }
