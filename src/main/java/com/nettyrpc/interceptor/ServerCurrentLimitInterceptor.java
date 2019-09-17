@@ -42,9 +42,9 @@ public class ServerCurrentLimitInterceptor implements Interceptor{
         log.info("ServerCurrentLimitInterceptor-requestId:{}",request.getRequestId());
         boolean isAllowable=limiter.isAllowable(request);
         if (!isAllowable) {
-            String error = "限流器【"+limiter.getClass().getName()+"】...被触发..."+"\n requestId:【"+request.getRequestId()+"】";
+            String error = "限流器【"+limiter.getClass().getName()+"】...被触发..."+" requestId:【"+request.getRequestId()+"】";
             response.setResult(error);
-            log.error(error);
+            throw new RuntimeException(error);
         }
     }
 
