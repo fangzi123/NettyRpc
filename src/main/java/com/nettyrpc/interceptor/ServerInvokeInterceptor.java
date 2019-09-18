@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.sf.cglib.reflect.FastClass;
 
 @Slf4j
-public class ServerInvokeInterceptor implements Interceptor{
+public class ServerInvokeInterceptor extends AbstractInterceptor{
 
     @Override
     public void handleRequest(RpcRequest request, RpcResponse response) throws Exception{
@@ -52,8 +52,4 @@ public class ServerInvokeInterceptor implements Interceptor{
             response.setResult(result);
     }
 
-    @Override
-    public void handleNext(RpcRequest request, RpcResponse response, InterceptorChain chain) throws Exception {
-        chain.intercept(request,response);
-    }
 }

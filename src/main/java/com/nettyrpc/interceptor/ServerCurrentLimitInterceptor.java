@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
  * @since 2018/11/26
  */
 @Slf4j
-public class ServerCurrentLimitInterceptor implements Interceptor{
+public class ServerCurrentLimitInterceptor extends AbstractInterceptor{
 
     private CurrentLimiter limiter;
 
@@ -46,10 +46,5 @@ public class ServerCurrentLimitInterceptor implements Interceptor{
             response.setResult(error);
             throw new RuntimeException(error);
         }
-    }
-
-    @Override
-    public void handleNext(RpcRequest request, RpcResponse response, InterceptorChain chain) throws Exception {
-        chain.intercept(request,response);
     }
 }

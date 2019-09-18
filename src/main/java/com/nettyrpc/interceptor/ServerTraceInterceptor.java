@@ -26,15 +26,11 @@ import lombok.extern.slf4j.Slf4j;
  * This interceptor is just a placeholder for integration with tracing tools using AOP.
  */
 @Slf4j
-public class ServerTraceInterceptor implements  Interceptor {
+public class ServerTraceInterceptor extends  AbstractInterceptor {
 
     @Override
     public void handleRequest(RpcRequest request, RpcResponse response) throws Exception {
         log.info("ServerTraceInterceptor-requestId:{}",request.getRequestId());
     }
 
-    @Override
-    public void handleNext(RpcRequest request, RpcResponse response, InterceptorChain chain) throws Exception {
-        chain.intercept(request,response);
-    }
 }
