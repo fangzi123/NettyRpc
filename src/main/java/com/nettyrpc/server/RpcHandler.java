@@ -9,16 +9,14 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-
-import java.util.Map;
-
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
-import lombok.Getter;
 import net.sf.cglib.reflect.FastClass;
-import net.sf.cglib.reflect.FastMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+import java.util.concurrent.Semaphore;
 
 /**
  * RPC Handler（RPC request processor）
@@ -32,6 +30,11 @@ public class RpcHandler extends SimpleChannelInboundHandler<RpcRequest> {
      * 心跳丢失次数
      */
     private int counter = 0;
+
+    /**
+     * 并发线程数控制
+     */
+    private static Semaphore semaphore = new Semaphore(500);
 
     private final Map<String, Object> handlerMap;
 
@@ -54,18 +57,22 @@ public class RpcHandler extends SimpleChannelInboundHandler<RpcRequest> {
                 RpcResponse response = new RpcResponse();
                 response.setRequestId(request.getRequestId());
                 try {
-                    if (!Constant.HEART_BEAT.equals(request.getRequestId())) {
+                    semaphore.acquire();
+                        if (!Constant.HEART_BEAT.equals(request.getRequestId())) {
 //                        Object  result = handle(request);
 //                        response.setResult(result);
-                        //责任链模式优化
-                        InterceptorChain interceptorChain = new DefaultInterceptorChain(RpcServer.interceptors);
-                        interceptorChain.intercept(request, response);
-                    }else{
-                        response.setResult("heartbeat ok");
-                    }
-                } catch (Throwable t) {
+                            //责任链模式优化
+                            InterceptorChain interceptorChain = new DefaultInterceptorChain(RpcServer.interceptors);
+                            interceptorChain.intercept(request, response);
+                        }else{
+                            response.setResult("heartbeat ok");
+                        }
+
+                } catch (Exception t) {
                     response.setError(t.toString());
                     logger.error("RPC Server handle request error", t);
+                }finally {
+                    semaphore.release();
                 }
                 ctx.writeAndFlush(response).addListener(new ChannelFutureListener() {
                     @Override
